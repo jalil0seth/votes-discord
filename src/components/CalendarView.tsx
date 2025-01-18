@@ -1,19 +1,26 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
+import { useConfig } from '../context/ConfigContext';
 import { format, startOfWeek, addDays, addWeeks, isBefore, isToday } from 'date-fns';
-import { MessageSquare, Video, Link as LinkIcon } from 'lucide-react';
+import { MessageSquare, Video, Link as LinkIcon, Users } from 'lucide-react';
 
 export function CalendarView() {
   const { state, dispatch } = useApp();
+  const { config } = useConfig();
   const today = new Date();
   const startOfCurrentWeek = startOfWeek(today);
   const nextWeek = addWeeks(startOfCurrentWeek, 1);
   const lastWeek = addWeeks(startOfCurrentWeek, -1);
 
-  const days = ['Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const currentWeekDays = days.map((day, index) => addDays(startOfCurrentWeek, index + 4));
-  const nextWeekDays = days.map((day, index) => addDays(nextWeek, index + 4));
-  const lastWeekDays = days.map((day, index) => addDays(lastWeek, index + 4));
+  const getWeekDays = (startDate: Date) => {
+    return config.meetingDays
+      .map(day => addDays(startDate, day))
+      .sort((a, b) => a.getTime() - b.getTime());
+  };
+
+  const currentWeekDays = getWeekDays(startOfCurrentWeek);
+  const nextWeekDays = getWeekDays(nextWeek);
+  const lastWeekDays = getWeekDays(lastWeek);
 
   const getTopicForDate = (date: Date) => {
     return state.topics.find(topic => 
@@ -55,9 +62,22 @@ export function CalendarView() {
                     {topic.title}
                   </h3>
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                      <MessageSquare className="w-4 h-4 mr-1" />
-                      {topic.questions?.length || 0} questions
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400">
+                      <div className="flex items-center space-x-1">
+                        <Users className="w-4 h-4" />
+                        <span>{topic.participants?.length || 0} joined</span>
+                      </div>
+                      {!isPast && (
+                        <button
+                          onClick={() => dispatch({
+                            type: 'JOIN_TOPIC',
+                            payload: { topicId: topic.id }
+                          })}
+                          className="text-blue-600 hover:text-blue-500"
+                        >
+                          Join
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
                       {topic.resources?.map(resource => (
@@ -94,7 +114,7 @@ export function CalendarView() {
   return (
     <div className="space-y-8">
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Digital Marketing Hub - Discord Server</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{config.serverName}</h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2">
           Schedule and manage your marketing discussions
         </p>

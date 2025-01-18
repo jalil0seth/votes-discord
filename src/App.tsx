@@ -9,8 +9,10 @@ import { NewTopicModal } from './components/NewTopicModal';
 import { MeetingInfoModal } from './components/MeetingInfoModal';
 import { ResourceModal } from './components/ResourceModal';
 import { QuestionModal } from './components/QuestionModal';
+import { ServerConfig } from './components/ServerConfig';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ConfigProvider } from './context/ConfigContext';
 
 function MainContent() {
   const { state } = useApp();
@@ -43,6 +45,7 @@ function MainContent() {
       {state.isMeetingModalOpen && <MeetingInfoModal />}
       {state.isResourceModalOpen && <ResourceModal />}
       {state.isQuestionModalOpen && <QuestionModal />}
+      <ServerConfig />
     </div>
   );
 }
@@ -50,9 +53,11 @@ function MainContent() {
 export default function App() {
   return (
     <ThemeProvider>
-      <AppProvider>
-        <MainContent />
-      </AppProvider>
+      <ConfigProvider>
+        <AppProvider>
+          <MainContent />
+        </AppProvider>
+      </ConfigProvider>
     </ThemeProvider>
   );
 }

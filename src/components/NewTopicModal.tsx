@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Calendar } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { addDays, startOfWeek } from 'date-fns';
+import { useConfig } from '../context/ConfigContext';
+import { addDays, startOfWeek, isBefore, format } from 'date-fns';
 
 export function NewTopicModal() {
   const { state, dispatch } = useApp();
+  const { config } = useConfig();
   const currentMeeting = state.meetings[0];
   const today = new Date();
   const startOfCurrentWeek = startOfWeek(today);
-  const availableDates = [
-    addDays(startOfCurrentWeek, 4), // Thursday
-    addDays(startOfCurrentWeek, 5), // Friday
-    addDays(startOfCurrentWeek, 6), // Saturday
-    addDays(startOfCurrentWeek, 7), // Sunday
-  ];
   
+  // Filter out past dates
+  const availableDates = config.meetingDays
+    .map(day => addDays(startOfCurrentWeek, day))
+    .filter(date => !isBefore(date, today));
+
   const [formData, setFormData] = useState({
     title: '',
     category: currentMeeting.category || 'marketing',
     description: '',
     scheduledDate: availableDates[0],
+    preferredTime: config.defaultTimes[0]
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -43,7 +45,10 @@ export function NewTopicModal() {
       <div className="bg-gray-800 rounded-lg w-full max-w-md">
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">Suggest New Topic</h2>
+            <div>
+              <h2 className="text-xl font-bold text-white">Suggest New Topic</h2>
+              <p className="text-sm text-gray-400 mt-1">{config.serverName} • ID: {config.serverId}</p>
+            </div>
             <button
               onClick={() => dispatch({ type: 'TOGGLE_NEW_TOPIC_MODAL' })}
               className="text-gray-400 hover:text-white transition-colors"
@@ -85,21 +90,50 @@ export function NewTopicModal() {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">
-              Preferred Date
-            </label>
-            <select
-              value={formData.scheduledDate.toISOString()}
-              onChange={(e) => setFormData({ ...formData, scheduledDate: new Date(e.target.value) })}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              {availableDates.map((date) => (
-                <option key={date.toISOString()} value={date.toISOString()}>
-                  {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Preferred Date
+              </label>
+              <select
+                value={formData.scheduledDate.toISOString()}
+                onChange={(e) => setFormData({ ...formData, scheduledDate: new Date(e.target.value) })}
+                className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {availableDates.map((date) => (
+                  <option key={date.toISOString()} value={date.toISOString()}>
+                    {format(date, 'EEE, MMM d')}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1">
+                Preferred Time
+              </label>
+              <select
+                value={formData.preferredTime}
+                onChange={(e) => setFormData({ ...formData, preferredTime: e.target.value })}
+                className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {config.defaultTimes.map((time) => (
+                  <option key={time} value={time}>
+                    {time}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="bg-gray-700 p-4 rounded-lg border border-gray-600">
+            <div className="flex items-center space-x-2 text-gray-300 mb-2">
+              <Calendar className="w-4 h-4" />
+              <span className="text-sm font-medium">Selected Schedule</span>
+            </div>
+            <p className="text-white text-lg">
+              {format(formData.scheduledDate, 'EEEE, MMMM d')} at {formData.preferredTime}
+            </p>
           </div>
 
           <div>
