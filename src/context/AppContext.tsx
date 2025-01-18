@@ -2,34 +2,63 @@ import React, { createContext, useContext, useReducer } from 'react';
 import { AppState, AppAction, Topic, Meeting } from '../types';
 
 const initialTimeSlots = [
-  { id: '1', time: '20:00', votes: 5 },
-  { id: '2', time: '21:00', votes: 8 },
-  { id: '3', time: '22:00', votes: 3 },
-  { id: '4', time: '23:00', votes: 2 },
+  { id: '1', time: '20:00', votes: 3 },
+  { id: '2', time: '21:00', votes: 5 },
+  { id: '3', time: '22:00', votes: 2 },
+  { id: '4', time: '23:00', votes: 1 },
+  { id: '5', time: '24:00', votes: 0 },
 ];
 
+// Sample initial topics
 const initialTopics: Topic[] = [
   {
     id: '1',
-    title: 'Pinterest Strategy for 2024',
-    category: 'pinterest',
-    description: 'Discussing the latest Pinterest algorithm changes and how to adapt our strategy.',
-    votes: 15,
+    title: 'Instagram Marketing Strategy 2024',
+    category: 'marketing',
+    description: 'Discuss the latest Instagram algorithm changes and how to optimize our content strategy.',
+    votes: 8,
     createdAt: new Date(),
     resources: [],
     questions: [],
   },
   {
     id: '2',
-    title: 'Content Marketing Trends',
-    category: 'marketing',
-    description: 'Exploring emerging content marketing trends and their implementation.',
-    votes: 12,
+    title: 'Brand Voice Guidelines',
+    category: 'branding',
+    description: 'Create comprehensive guidelines for our brand voice across all platforms.',
+    votes: 5,
+    createdAt: new Date(),
+    resources: [],
+    questions: [],
+  },
+  {
+    id: '3',
+    title: 'Pinterest SEO Techniques',
+    category: 'pinterest',
+    description: 'Learn and implement the latest Pinterest SEO techniques for better visibility.',
+    votes: 6,
+    createdAt: new Date(),
+    resources: [],
+    questions: [],
+  },
+  {
+    id: '4',
+    title: 'Content Calendar Planning',
+    category: 'blogging',
+    description: 'Plan our Q1 2024 content calendar and content themes.',
+    votes: 4,
     createdAt: new Date(),
     resources: [],
     questions: [],
   },
 ];
+
+// Set voting period to 48 hours from now
+const topicVotingEndsAt = new Date();
+topicVotingEndsAt.setHours(topicVotingEndsAt.getHours() + 48);
+
+const timeVotingEndsAt = new Date();
+timeVotingEndsAt.setHours(timeVotingEndsAt.getHours() + 24);
 
 const initialState: AppState = {
   topics: initialTopics,
@@ -38,6 +67,8 @@ const initialState: AppState = {
     id: '1',
     status: 'topic-selection',
     date: new Date(),
+    topicVotingEndsAt,
+    timeVotingEndsAt,
     timeSlots: initialTimeSlots,
   }],
   currentMeeting: null,
@@ -70,6 +101,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         selectedCategory: action.payload,
+        meetings: state.meetings.map(meeting => ({
+          ...meeting,
+          category: action.payload || undefined,
+        })),
       };
 
     case 'VOTE_TIME_SLOT':
@@ -99,9 +134,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
             ? {
                 ...meeting,
                 selectedTopic,
+                status: 'time-voting',
               }
             : meeting
         ),
+        isMeetingModalOpen: false,
       };
     }
 
@@ -113,6 +150,19 @@ function appReducer(state: AppState, action: AppAction): AppState {
             ? {
                 ...meeting,
                 status: action.payload.status,
+              }
+            : meeting
+        ),
+      };
+
+    case 'SET_MEETING_CATEGORY':
+      return {
+        ...state,
+        meetings: state.meetings.map(meeting =>
+          meeting.id === action.payload.meetingId
+            ? {
+                ...meeting,
+                category: action.payload.category,
               }
             : meeting
         ),

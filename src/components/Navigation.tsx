@@ -14,51 +14,67 @@ export function Navigation() {
         return {
           title: '1. Topic Selection',
           description: 'Vote for your preferred topic',
-          nextAction: 'Move to Time Selection'
+          nextAction: 'Move to Time Selection',
+          canProceed: currentMeeting.selectedTopic !== undefined
         };
       case 'time-voting':
         return {
           title: '2. Time Selection',
           description: 'Choose the best meeting time',
-          nextAction: 'Move to Preparation'
+          nextAction: 'Move to Preparation',
+          canProceed: currentMeeting.selectedTimeSlot !== undefined
         };
       case 'preparation':
         return {
           title: '3. Meeting Preparation',
           description: 'Share resources and questions',
-          nextAction: 'Finalize Meeting'
+          nextAction: 'Finalize Meeting',
+          canProceed: true
+        };
+      case 'scheduled':
+        return {
+          title: 'Meeting Scheduled',
+          description: 'All set for the meeting',
+          nextAction: 'Start New Meeting',
+          canProceed: true
         };
       default:
         return {
           title: 'Digital Marketing Hub',
           description: 'Plan your next meeting',
-          nextAction: 'Start Planning'
+          nextAction: 'Start Planning',
+          canProceed: true
         };
     }
   };
 
   const handleNextPhase = () => {
-    switch (currentMeeting?.status) {
+    if (!currentMeeting) return;
+
+    switch (currentMeeting.status) {
       case 'topic-selection':
-        if (currentMeeting.selectedTopic) {
-          dispatch({ 
-            type: 'SET_MEETING_STATUS', 
-            payload: { meetingId: currentMeeting.id, status: 'time-voting' }
-          });
-        }
+        dispatch({ 
+          type: 'SET_MEETING_STATUS', 
+          payload: { meetingId: currentMeeting.id, status: 'time-voting' }
+        });
         break;
       case 'time-voting':
-        if (currentMeeting.selectedTimeSlot) {
-          dispatch({ 
-            type: 'SET_MEETING_STATUS', 
-            payload: { meetingId: currentMeeting.id, status: 'preparation' }
-          });
-        }
+        dispatch({ 
+          type: 'SET_MEETING_STATUS', 
+          payload: { meetingId: currentMeeting.id, status: 'preparation' }
+        });
         break;
       case 'preparation':
         dispatch({ 
           type: 'SET_MEETING_STATUS', 
           payload: { meetingId: currentMeeting.id, status: 'scheduled' }
+        });
+        break;
+      case 'scheduled':
+        // Start a new meeting cycle
+        dispatch({ 
+          type: 'SET_MEETING_STATUS', 
+          payload: { meetingId: currentMeeting.id, status: 'topic-selection' }
         });
         break;
       default:
@@ -93,7 +109,10 @@ export function Navigation() {
             </button>
             <button
               onClick={handleNextPhase}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors"
+              disabled={!phaseInfo.canProceed}
+              className={`bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+                !phaseInfo.canProceed ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
             >
               <span>{phaseInfo.nextAction}</span>
               <ArrowRight className="w-5 h-5" />

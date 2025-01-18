@@ -3,10 +3,12 @@ import { X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export function NewTopicModal() {
-  const { dispatch } = useApp();
+  const { state, dispatch } = useApp();
+  const currentMeeting = state.meetings[0];
+  
   const [formData, setFormData] = useState({
     title: '',
-    category: 'marketing',
+    category: currentMeeting.category || 'marketing',
     description: '',
   });
 
@@ -19,8 +21,11 @@ export function NewTopicModal() {
         ...formData,
         votes: 0,
         createdAt: new Date(),
+        resources: [],
+        questions: [],
       },
     });
+    dispatch({ type: 'TOGGLE_NEW_TOPIC_MODAL' });
   };
 
   return (
@@ -28,7 +33,7 @@ export function NewTopicModal() {
       <div className="bg-gray-800 rounded-lg w-full max-w-md">
         <div className="p-4 border-b border-gray-700">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-white">New Topic</h2>
+            <h2 className="text-xl font-bold text-white">Suggest New Topic</h2>
             <button
               onClick={() => dispatch({ type: 'TOGGLE_NEW_TOPIC_MODAL' })}
               className="text-gray-400 hover:text-white transition-colors"
@@ -61,6 +66,7 @@ export function NewTopicModal() {
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
               className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              disabled={!!currentMeeting.category}
             >
               <option value="marketing">Marketing</option>
               <option value="branding">Branding</option>
@@ -86,7 +92,7 @@ export function NewTopicModal() {
             type="submit"
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
           >
-            Create Topic
+            Submit Topic
           </button>
         </form>
       </div>

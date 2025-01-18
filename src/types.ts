@@ -11,7 +11,7 @@ export interface Topic {
 
 export interface Resource {
   id: string;
-  type: 'video' | 'link' | 'document';
+  type: 'video' | 'link';
   title: string;
   url: string;
   addedBy: string;
@@ -36,9 +36,12 @@ export interface Meeting {
   id: string;
   status: 'topic-selection' | 'time-voting' | 'preparation' | 'scheduled';
   date: Date;
+  topicVotingEndsAt: Date;
+  timeVotingEndsAt: Date;
   selectedTopic?: Topic;
   timeSlots: TimeSlot[];
   selectedTimeSlot?: TimeSlot;
+  category?: string;
 }
 
 export interface AppState {
@@ -66,4 +69,5 @@ export type AppAction =
   | { type: 'ANSWER_QUESTION'; payload: { topicId: string; questionId: string; answer: string } }
   | { type: 'SELECT_TOPIC'; payload: { meetingId: string; topicId: string } }
   | { type: 'SELECT_TIME_SLOT'; payload: { meetingId: string; slotId: string } }
-  | { type: 'SET_MEETING_STATUS'; payload: { meetingId: string; status: Meeting['status'] } };
+  | { type: 'SET_MEETING_STATUS'; payload: { meetingId: string; status: Meeting['status'] } }
+  | { type: 'SET_MEETING_CATEGORY'; payload: { meetingId: string; category: string } };

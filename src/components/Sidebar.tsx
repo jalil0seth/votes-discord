@@ -11,6 +11,17 @@ const categories = [
 
 export function Sidebar() {
   const { state, dispatch } = useApp();
+  const currentMeeting = state.meetings[0];
+
+  const handleCategorySelect = (categoryId: string | null) => {
+    dispatch({ type: 'SET_CATEGORY', payload: categoryId });
+    if (categoryId) {
+      dispatch({
+        type: 'SET_MEETING_CATEGORY',
+        payload: { meetingId: currentMeeting.id, category: categoryId }
+      });
+    }
+  };
 
   return (
     <div className="w-60 bg-gray-900 h-screen p-4 flex flex-col">
@@ -21,7 +32,7 @@ export function Sidebar() {
       <div className="space-y-2">
         <h2 className="text-gray-400 uppercase text-xs font-semibold mb-2">Categories</h2>
         <button
-          onClick={() => dispatch({ type: 'SET_CATEGORY', payload: null })}
+          onClick={() => handleCategorySelect(null)}
           className={`flex items-center space-x-2 text-gray-300 hover:bg-gray-800 w-full p-2 rounded transition-colors ${
             state.selectedCategory === null ? 'bg-gray-800 text-white' : ''
           }`}
@@ -31,7 +42,7 @@ export function Sidebar() {
         {categories.map((category) => (
           <button
             key={category.id}
-            onClick={() => dispatch({ type: 'SET_CATEGORY', payload: category.id })}
+            onClick={() => handleCategorySelect(category.id)}
             className={`flex items-center space-x-2 text-gray-300 hover:bg-gray-800 w-full p-2 rounded transition-colors ${
               state.selectedCategory === category.id ? 'bg-gray-800 text-white' : ''
             }`}
@@ -43,17 +54,29 @@ export function Sidebar() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-gray-400 uppercase text-xs font-semibold mb-2">Schedule</h2>
-        <button className="flex items-center space-x-2 text-gray-300 hover:bg-gray-800 w-full p-2 rounded transition-colors">
-          <Calendar className="w-4 h-4" />
-          <span>Weekly Meetings</span>
-        </button>
-      </div>
-
-      <div className="mt-auto pt-4 border-t border-gray-800">
-        <div className="text-sm text-gray-400">
-          <p>Next meeting:</p>
-          <p className="text-white">Thursday, 21:00</p>
+        <h2 className="text-gray-400 uppercase text-xs font-semibold mb-2">Meeting Status</h2>
+        <div className="bg-gray-800 p-3 rounded-lg">
+          <div className="text-sm text-gray-300">
+            <p className="font-medium text-white mb-1">Current Phase:</p>
+            <p>{currentMeeting?.status === 'topic-selection' ? 'Topic Selection' :
+               currentMeeting?.status === 'time-voting' ? 'Time Voting' :
+               currentMeeting?.status === 'preparation' ? 'Meeting Preparation' :
+               'Meeting Scheduled'}</p>
+            
+            {currentMeeting?.selectedTopic && (
+              <div className="mt-2">
+                <p className="font-medium text-white mb-1">Selected Topic:</p>
+                <p className="text-gray-400">{currentMeeting.selectedTopic.title}</p>
+              </div>
+            )}
+            
+            {currentMeeting?.selectedTimeSlot && (
+              <div className="mt-2">
+                <p className="font-medium text-white mb-1">Selected Time:</p>
+                <p className="text-gray-400">{currentMeeting.selectedTimeSlot.time}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
