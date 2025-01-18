@@ -13,8 +13,16 @@ export function CalendarView() {
   const lastWeek = addWeeks(startOfCurrentWeek, -1);
 
   const getWeekDays = (startDate: Date) => {
+    // Use the meeting days from config
     return config.meetingDays
-      .map(day => addDays(startDate, day))
+      .map(day => {
+        const date = addDays(startDate, day);
+        // If the day is less than the current day in the week, move it to next week
+        if (day < startDate.getDay()) {
+          return addDays(date, 7);
+        }
+        return date;
+      })
       .sort((a, b) => a.getTime() - b.getTime());
   };
 
