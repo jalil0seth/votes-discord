@@ -5,7 +5,6 @@ export interface Topic {
   description: string;
   votes: number;
   createdAt: Date;
-  votingEndsAt?: Date;
   resources?: Resource[];
   questions?: Question[];
 }
@@ -40,7 +39,6 @@ export interface Meeting {
   selectedTopic?: Topic;
   timeSlots: TimeSlot[];
   selectedTimeSlot?: TimeSlot;
-  votingEndsAt: Date;
 }
 
 export interface AppState {
@@ -67,4 +65,5 @@ export type AppAction =
   | { type: 'ADD_QUESTION'; payload: { topicId: string; question: Question } }
   | { type: 'ANSWER_QUESTION'; payload: { topicId: string; questionId: string; answer: string } }
   | { type: 'SELECT_TOPIC'; payload: { meetingId: string; topicId: string } }
-  | { type: 'SELECT_TIME_SLOT'; payload: { meetingId: string; slotId: string } };
+  | { type: 'SELECT_TIME_SLOT'; payload: { meetingId: string; slotId: string } }
+  | { type: 'SET_MEETING_STATUS'; payload: { meetingId: string; status: Meeting['status'] } };

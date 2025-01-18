@@ -8,13 +8,6 @@ const initialTimeSlots = [
   { id: '4', time: '23:00', votes: 2 },
 ];
 
-// Helper to add hours to a date
-const addHours = (date: Date, hours: number) => {
-  const newDate = new Date(date);
-  newDate.setHours(newDate.getHours() + hours);
-  return newDate;
-};
-
 const initialTopics: Topic[] = [
   {
     id: '1',
@@ -23,7 +16,6 @@ const initialTopics: Topic[] = [
     description: 'Discussing the latest Pinterest algorithm changes and how to adapt our strategy.',
     votes: 15,
     createdAt: new Date(),
-    votingEndsAt: addHours(new Date(), 48),
     resources: [],
     questions: [],
   },
@@ -34,7 +26,6 @@ const initialTopics: Topic[] = [
     description: 'Exploring emerging content marketing trends and their implementation.',
     votes: 12,
     createdAt: new Date(),
-    votingEndsAt: addHours(new Date(), 48),
     resources: [],
     questions: [],
   },
@@ -48,7 +39,6 @@ const initialState: AppState = {
     status: 'topic-selection',
     date: new Date(),
     timeSlots: initialTimeSlots,
-    votingEndsAt: addHours(new Date(), 48),
   }],
   currentMeeting: null,
   isNewTopicModalOpen: false,
@@ -62,12 +52,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'ADD_TOPIC':
       return {
         ...state,
-        topics: [...state.topics, {
-          ...action.payload,
-          votingEndsAt: addHours(new Date(), 48),
-          resources: [],
-          questions: [],
-        }],
+        topics: [...state.topics, action.payload],
         isNewTopicModalOpen: false,
       };
 
@@ -75,7 +60,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         topics: state.topics.map(topic =>
-          topic.id === action.payload.id && new Date() < (topic.votingEndsAt || new Date())
+          topic.id === action.payload.id
             ? { ...topic, votes: topic.votes + action.payload.value }
             : topic
         ),
@@ -91,7 +76,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return {
         ...state,
         meetings: state.meetings.map(meeting =>
-          meeting.id === action.payload.meetingId && meeting.status === 'time-voting'
+          meeting.id === action.payload.meetingId
             ? {
                 ...meeting,
                 timeSlots: meeting.timeSlots.map(slot =>
@@ -99,6 +84,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
                     ? { ...slot, votes: slot.votes + 1 }
                     : slot
                 ),
+                selectedTimeSlot: meeting.timeSlots.find(slot => slot.id === action.payload.slotId),
               }
             : meeting
         ),
@@ -113,30 +99,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
             ? {
                 ...meeting,
                 selectedTopic,
-                status: 'time-voting',
-                votingEndsAt: addHours(new Date(), 24),
               }
             : meeting
         ),
       };
     }
 
-    case 'SELECT_TIME_SLOT': {
-      const meeting = state.meetings.find(m => m.id === action.payload.meetingId);
-      const selectedTimeSlot = meeting?.timeSlots.find(t => t.id === action.payload.slotId);
+    case 'SET_MEETING_STATUS':
       return {
         ...state,
         meetings: state.meetings.map(meeting =>
           meeting.id === action.payload.meetingId
             ? {
                 ...meeting,
-                selectedTimeSlot,
-                status: 'preparation',
+                status: action.payload.status,
               }
             : meeting
         ),
       };
-    }
 
     case 'ADD_RESOURCE':
       return {
