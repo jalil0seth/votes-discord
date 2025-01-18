@@ -1,10 +1,12 @@
+import { ReactNode } from 'react';
+
 export interface Topic {
   id: string;
   title: string;
-  category: 'marketing' | 'branding' | 'blogging' | 'pinterest';
   description: string;
   votes: number;
   createdAt: Date;
+  scheduledDate: Date;
   resources?: Resource[];
   questions?: Question[];
 }
@@ -23,6 +25,7 @@ export interface Question {
   content: string;
   askedBy: string;
   createdAt: Date;
+  votes: number;
   answer?: string;
 }
 
@@ -41,14 +44,12 @@ export interface Meeting {
   selectedTopic?: Topic;
   timeSlots: TimeSlot[];
   selectedTimeSlot?: TimeSlot;
-  category?: string;
 }
 
 export interface AppState {
   topics: Topic[];
-  selectedCategory: string | null;
   meetings: Meeting[];
-  currentMeeting: Meeting | null;
+  currentView: 'calendar' | 'topic' | 'time' | 'resources' | 'questions';
   isNewTopicModalOpen: boolean;
   isMeetingModalOpen: boolean;
   isResourceModalOpen: boolean;
@@ -58,8 +59,9 @@ export interface AppState {
 export type AppAction = 
   | { type: 'ADD_TOPIC'; payload: Topic }
   | { type: 'VOTE_TOPIC'; payload: { id: string; value: 1 | -1 } }
-  | { type: 'SET_CATEGORY'; payload: string | null }
   | { type: 'VOTE_TIME_SLOT'; payload: { meetingId: string; slotId: string } }
+  | { type: 'VOTE_QUESTION'; payload: { topicId: string; questionId: string } }
+  | { type: 'SET_VIEW'; payload: AppState['currentView'] }
   | { type: 'TOGGLE_NEW_TOPIC_MODAL' }
   | { type: 'TOGGLE_MEETING_MODAL' }
   | { type: 'TOGGLE_RESOURCE_MODAL' }
@@ -69,5 +71,4 @@ export type AppAction =
   | { type: 'ANSWER_QUESTION'; payload: { topicId: string; questionId: string; answer: string } }
   | { type: 'SELECT_TOPIC'; payload: { meetingId: string; topicId: string } }
   | { type: 'SELECT_TIME_SLOT'; payload: { meetingId: string; slotId: string } }
-  | { type: 'SET_MEETING_STATUS'; payload: { meetingId: string; status: Meeting['status'] } }
-  | { type: 'SET_MEETING_CATEGORY'; payload: { meetingId: string; category: string } };
+  | { type: 'SET_MEETING_STATUS'; payload: { meetingId: string; status: Meeting['status'] } };
