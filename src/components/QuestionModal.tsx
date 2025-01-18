@@ -18,11 +18,14 @@ export function QuestionModal() {
         question: {
           id: crypto.randomUUID(),
           content: question,
-          askedBy: 'Anonymous',
+          askedBy: 'User ' + state.currentUserId.slice(0, 4),
           createdAt: new Date(),
+          votes: 0,
         },
       },
     });
+    dispatch({ type: 'TOGGLE_QUESTION_MODAL' });
+    setQuestion('');
   };
 
   return (

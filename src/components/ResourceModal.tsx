@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Video, Link as LinkIcon, FileText } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export function ResourceModal() {
   const { state, dispatch } = useApp();
   const [formData, setFormData] = useState({
     title: '',
-    type: 'link',
+    type: 'link' as 'video' | 'link' | 'article',
     url: '',
   });
 
@@ -22,11 +22,13 @@ export function ResourceModal() {
         resource: {
           id: crypto.randomUUID(),
           ...formData,
-          addedBy: 'Anonymous',
+          addedBy: 'User ' + state.currentUserId.slice(0, 4),
           createdAt: new Date(),
         },
       },
     });
+    dispatch({ type: 'TOGGLE_RESOURCE_MODAL' });
+    setFormData({ title: '', type: 'link', url: '' });
   };
 
   return (
@@ -63,14 +65,44 @@ export function ResourceModal() {
             <label className="block text-sm font-medium text-gray-300 mb-1">
               Type
             </label>
-            <select
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value as 'video' | 'link' })}
-              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="video">Video</option>
-              <option value="link">Link</option>
-            </select>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: 'video' })}
+                className={`flex items-center justify-center space-x-2 p-2 rounded-lg ${
+                  formData.type === 'video'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                <Video className="w-4 h-4" />
+                <span>Video</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: 'article' })}
+                className={`flex items-center justify-center space-x-2 p-2 rounded-lg ${
+                  formData.type === 'article'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                <span>Article</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormData({ ...formData, type: 'link' })}
+                className={`flex items-center justify-center space-x-2 p-2 rounded-lg ${
+                  formData.type === 'link'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
+                }`}
+              >
+                <LinkIcon className="w-4 h-4" />
+                <span>Link</span>
+              </button>
+            </div>
           </div>
 
           <div>

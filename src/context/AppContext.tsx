@@ -16,7 +16,7 @@ interface Topic {
 interface Resource {
   id: string;
   title: string;
-  type: 'video' | 'link';
+  type: 'video' | 'link' | 'article';
   url: string;
   addedBy: string;
   createdAt: Date;
@@ -28,7 +28,7 @@ interface Question {
   askedBy: string;
   answer?: string;
   createdAt: Date;
-  votes?: number;
+  votes: number;
 }
 
 interface TimeSlot {
@@ -64,6 +64,7 @@ interface AppState {
   isResourceModalOpen: boolean;
   isQuestionModalOpen: boolean;
   isServerConfigOpen: boolean;
+  currentUserId: string;
 }
 
 type AppAction =
@@ -107,6 +108,7 @@ const initialState: AppState = {
   isResourceModalOpen: false,
   isQuestionModalOpen: false,
   isServerConfigOpen: false,
+  currentUserId: crypto.randomUUID(),
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -231,24 +233,28 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
 
     case 'JOIN_TOPIC':
-      return {
-        ...state,
-        topics: state.topics.map((topic) =>
-          topic.id === action.payload.topicId
-            ? {
-                ...topic,
-                participants: [
-                  ...(topic.participants || []),
-                  {
-                    id: crypto.randomUUID(),
-                    name: 'Anonymous User',
-                    joinedAt: new Date(),
-                  },
-                ],
-              }
-            : topic
-        ),
-      };
+      const topic = state.topics.find(t => t.id === action.payload.topicId);
+      if (!topic?.participants?.some(p => p.id === state.currentUserId)) {
+        return {
+          ...state,
+          topics: state.topics.map((topic) =>
+            topic.id === action.payload.topicId
+              ? {
+                  ...topic,
+                  participants: [
+                    ...(topic.participants || []),
+                    {
+                      id: state.currentUserId,
+                      name: 'User ' + state.currentUserId.slice(0, 4),
+                      joinedAt: new Date(),
+                    },
+                  ],
+                }
+              : topic
+          ),
+        };
+      }
+      return state;
 
     case 'TOGGLE_NEW_TOPIC_MODAL':
       return { ...state, isNewTopicModalOpen: !state.isNewTopicModalOpen };
