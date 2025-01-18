@@ -1,23 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { useConfig } from '../context/ConfigContext';
-import { format, startOfWeek, addDays, addWeeks, isBefore, isToday } from 'date-fns';
-import { MessageSquare, Video, Link as LinkIcon, Users } from 'lucide-react';
+import { format, startOfWeek, addDays, addWeeks, subWeeks, isBefore, isToday } from 'date-fns';
+import { MessageSquare, Video, Link as LinkIcon, Users, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function CalendarView() {
   const { state, dispatch } = useApp();
   const { config } = useConfig();
+  const currentMeeting = state.meetings[0];
   const today = new Date();
-  const startOfCurrentWeek = startOfWeek(today);
-  const nextWeek = addWeeks(startOfCurrentWeek, 1);
-  const lastWeek = addWeeks(startOfCurrentWeek, -1);
+  const [currentDate, setCurrentDate] = useState(today);
+  const startOfCurrentWeek = startOfWeek(currentDate);
+  const startOfNextWeek = addWeeks(startOfCurrentWeek, 1);
 
   const getWeekDays = (startDate: Date) => {
-    // Use the meeting days from config
     return config.meetingDays
       .map(day => {
         const date = addDays(startDate, day);
-        // If the day is less than the current day in the week, move it to next week
         if (day < startDate.getDay()) {
           return addDays(date, 7);
         }
@@ -27,8 +26,7 @@ export function CalendarView() {
   };
 
   const currentWeekDays = getWeekDays(startOfCurrentWeek);
-  const nextWeekDays = getWeekDays(nextWeek);
-  const lastWeekDays = getWeekDays(lastWeek);
+  const nextWeekDays = getWeekDays(startOfNextWeek);
 
   const getTopicForDate = (date: Date) => {
     return state.topics.find(topic => 
@@ -36,11 +34,61 @@ export function CalendarView() {
     );
   };
 
+  const handlePreviousWeek = () => {
+    setCurrentDate(prev => subWeeks(prev, 1));
+  };
+
+  const handleNextWeek = () => {
+    setCurrentDate(prev => addWeeks(prev, 1));
+  };
+
+  const handleGoToToday = () => {
+    setCurrentDate(today);
+  };
+
+  const renderSelectedTopicStatus = () => {
+    if (!currentMeeting.selectedTopic) return null;
+
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Selected Topic: {currentMeeting.selectedTopic.title}
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-4">{currentMeeting.selectedTopic.description}</p>
+            
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={() => dispatch({ type: 'SET_VIEW', payload: 'resources' })}
+                className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+              >
+                <Video className="w-4 h-4" />
+                <span>{currentMeeting.selectedTopic.resources?.length || 0} Resources</span>
+              </button>
+              
+              <button
+                onClick={() => dispatch({ type: 'SET_VIEW', payload: 'questions' })}
+                className="flex items-center space-x-2 text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>{currentMeeting.selectedTopic.questions?.length || 0} Questions</span>
+              </button>
+              
+              <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                <Users className="w-4 h-4" />
+                <span>{currentMeeting.selectedTopic.participants?.length || 0} Participants</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderWeek = (weekDays: Date[], weekTitle: string) => (
-    <div>
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-        {weekTitle}
-      </h2>
+    <div className="mb-8 last:mb-0">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{weekTitle}</h2>
       <div className="grid grid-cols-4 gap-4">
         {weekDays.map((date) => {
           const topic = getTopicForDate(date);
@@ -76,15 +124,29 @@ export function CalendarView() {
                         <span>{topic.participants?.length || 0} joined</span>
                       </div>
                       {!isPast && (
-                        <button
-                          onClick={() => dispatch({
-                            type: 'JOIN_TOPIC',
-                            payload: { topicId: topic.id }
-                          })}
-                          className="text-blue-600 hover:text-blue-500"
-                        >
-                          Join
-                        </button>
+                        topic.id === currentMeeting.selectedTopic?.id ? (
+                          <button
+                            onClick={() => dispatch({
+                              type: 'JOIN_TOPIC',
+                              payload: { topicId: topic.id }
+                            })}
+                            className="text-blue-600 hover:text-blue-500"
+                          >
+                            Join Discussion
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              dispatch({
+                                type: 'SELECT_TOPIC',
+                                payload: { meetingId: currentMeeting.id, topicId: topic.id }
+                              });
+                            }}
+                            className="text-blue-600 hover:text-blue-500"
+                          >
+                            Select
+                          </button>
+                        )
                       )}
                     </div>
                     <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
@@ -120,15 +182,35 @@ export function CalendarView() {
   );
 
   return (
-    <div className="space-y-8">
+    <div>
+      {renderSelectedTopicStatus()}
+
       <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6 mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{config.serverName}</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">
-          Schedule and manage your marketing discussions
-        </p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{config.serverName}</h1>
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handlePreviousWeek}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={handleGoToToday}
+              className="px-4 py-2 text-sm font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+            >
+              Today
+            </button>
+            <button
+              onClick={handleNextWeek}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
       </div>
 
-      {renderWeek(lastWeekDays, "Last Week")}
       {renderWeek(currentWeekDays, "This Week")}
       {renderWeek(nextWeekDays, "Next Week")}
     </div>

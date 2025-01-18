@@ -1,5 +1,5 @@
 import React from 'react';
-import { Calendar, Clock, Video, MessageSquare, Sun, Moon, Settings } from 'lucide-react';
+import { Calendar, Video, MessageSquare, Sun, Moon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useTheme } from '../context/ThemeContext';
 import { useConfig } from '../context/ConfigContext';
@@ -11,7 +11,6 @@ export function Navigation() {
 
   const navItems = [
     { id: 'calendar', label: 'Calendar', icon: Calendar },
-    { id: 'topic', label: 'Topics', icon: Clock },
     { id: 'resources', label: 'Resources', icon: Video },
     { id: 'questions', label: 'Questions', icon: MessageSquare },
   ];
@@ -42,21 +41,12 @@ export function Navigation() {
             </nav>
           </div>
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-            </button>
-            <button
-              onClick={() => dispatch({ type: 'TOGGLE_SERVER_CONFIG' })}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-              title="Server Settings"
-            >
-              <Settings className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
         </div>
       </div>
     </div>
