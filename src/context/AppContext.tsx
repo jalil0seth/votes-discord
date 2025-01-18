@@ -14,7 +14,7 @@ const initialState: AppState = {
     id: '1',
     status: 'topic-selection',
     date: new Date(),
-    topicVotingEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+    topicVotingEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     timeVotingEndsAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
     timeSlots: initialTimeSlots,
   }],
@@ -27,23 +27,60 @@ const initialState: AppState = {
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
-    case 'ADD_TOPIC':
-      if (state.topics.length >= 4) {
-        return state;
-      }
-      return {
-        ...state,
-        topics: [...state.topics, action.payload],
-        isNewTopicModalOpen: false,
-      };
+    case 'ADD_TOPIC': {
+      const newTopics = [...state.topics, action.payload];
+      const topicWithMostVotes = newTopics.reduce((prev, current) => 
+        (current.votes > prev.votes) ? current : prev
+      );
 
-    case 'VOTE_TOPIC':
       return {
         ...state,
-        topics: state.topics.map(topic =>
-          topic.id === action.payload.id
-            ? { ...topic, votes: topic.votes + action.payload.value }
-            : topic
+        topics: newTopics,
+        isNewTopicModalOpen: false,
+        meetings: state.meetings.map(meeting => ({
+          ...meeting,
+          selectedTopic: topicWithMostVotes,
+          status: 'time-voting'
+        }))
+      };
+    }
+
+    case 'VOTE_TOPIC': {
+      const updatedTopics = state.topics.map(topic =>
+        topic.id === action.payload.id
+          ? { ...topic, votes: topic.votes + action.payload.value }
+          : topic
+      );
+
+      const topicWithMostVotes = updatedTopics.reduce((prev, current) => 
+        (current.votes > prev.votes) ? current : prev
+      );
+
+      return {
+        ...state,
+        topics: updatedTopics,
+        meetings: state.meetings.map(meeting => ({
+          ...meeting,
+          selectedTopic: topicWithMostVotes,
+          status: 'time-voting'
+        }))
+      };
+    }
+
+    case 'VOTE_TIME_SLOT':
+      return {
+        ...state,
+        meetings: state.meetings.map(meeting =>
+          meeting.id === action.payload.meetingId
+            ? {
+                ...meeting,
+                timeSlots: meeting.timeSlots.map(slot =>
+                  slot.id === action.payload.slotId
+                    ? { ...slot, votes: slot.votes + 1 }
+                    : slot
+                ),
+              }
+            : meeting
         ),
       };
 
@@ -70,8 +107,115 @@ function appReducer(state: AppState, action: AppAction): AppState {
         currentView: action.payload,
       };
 
-    // ... rest of the reducer cases remain the same
-    
+    case 'TOGGLE_NEW_TOPIC_MODAL':
+      return {
+        ...state,
+        isNewTopicModalOpen: !state.isNewTopicModalOpen,
+      };
+
+    case 'TOGGLE_MEETING_MODAL':
+      return {
+        ...state,
+        isMeetingModalOpen: !state.isMeetingModalOpen,
+      };
+
+    case 'TOGGLE_RESOURCE_MODAL':
+      return {
+        ...state,
+        isResourceModalOpen: !state.isResourceModalOpen,
+      };
+
+    case 'TOGGLE_QUESTION_MODAL':
+      return {
+        ...state,
+        isQuestionModalOpen: !state.isQuestionModalOpen,
+      };
+
+    case 'ADD_RESOURCE':
+      return {
+        ...state,
+        topics: state.topics.map(topic =>
+          topic.id === action.payload.topicId
+            ? {
+                ...topic,
+                resources: [...(topic.resources || []), action.payload.resource],
+              }
+            : topic
+        ),
+        isResourceModalOpen: false,
+      };
+
+    case 'ADD_QUESTION':
+      return {
+        ...state,
+        topics: state.topics.map(topic =>
+          topic.id === action.payload.topicId
+            ? {
+                ...topic,
+                questions: [...(topic.questions || []), action.payload.question],
+              }
+            : topic
+        ),
+        isQuestionModalOpen: false,
+      };
+
+    case 'ANSWER_QUESTION':
+      return {
+        ...state,
+        topics: state.topics.map(topic =>
+          topic.id === action.payload.topicId
+            ? {
+                ...topic,
+                questions: topic.questions?.map(question =>
+                  question.id === action.payload.questionId
+                    ? { ...question, answer: action.payload.answer }
+                    : question
+                ),
+              }
+            : topic
+        ),
+      };
+
+    case 'SELECT_TOPIC':
+      return {
+        ...state,
+        meetings: state.meetings.map(meeting =>
+          meeting.id === action.payload.meetingId
+            ? {
+                ...meeting,
+                selectedTopic: state.topics.find(t => t.id === action.payload.topicId),
+                status: 'time-voting',
+              }
+            : meeting
+        ),
+        isMeetingModalOpen: false,
+      };
+
+    case 'SELECT_TIME_SLOT':
+      return {
+        ...state,
+        meetings: state.meetings.map(meeting =>
+          meeting.id === action.payload.meetingId
+            ? {
+                ...meeting,
+                selectedTimeSlot: meeting.timeSlots.find(s => s.id === action.payload.slotId),
+                status: 'preparation',
+              }
+            : meeting
+        ),
+        isMeetingModalOpen: false,
+      };
+
+    case 'SET_MEETING_STATUS':
+      return {
+        ...state,
+        meetings: state.meetings.map(meeting =>
+          meeting.id === action.payload.meetingId
+            ? { ...meeting, status: action.payload.status }
+            : meeting
+        ),
+      };
+
     default:
       return state;
   }

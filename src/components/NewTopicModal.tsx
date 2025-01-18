@@ -1,15 +1,25 @@
 import React, { useState } from 'react';
 import { X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { addDays, startOfWeek } from 'date-fns';
 
 export function NewTopicModal() {
   const { state, dispatch } = useApp();
   const currentMeeting = state.meetings[0];
+  const today = new Date();
+  const startOfCurrentWeek = startOfWeek(today);
+  const availableDates = [
+    addDays(startOfCurrentWeek, 4), // Thursday
+    addDays(startOfCurrentWeek, 5), // Friday
+    addDays(startOfCurrentWeek, 6), // Saturday
+    addDays(startOfCurrentWeek, 7), // Sunday
+  ];
   
   const [formData, setFormData] = useState({
     title: '',
     category: currentMeeting.category || 'marketing',
     description: '',
+    scheduledDate: availableDates[0],
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,7 +74,7 @@ export function NewTopicModal() {
             </label>
             <select
               value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value as any })}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
               className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
               disabled={!!currentMeeting.category}
             >
@@ -72,6 +82,23 @@ export function NewTopicModal() {
               <option value="branding">Branding</option>
               <option value="blogging">Blogging</option>
               <option value="pinterest">Pinterest</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">
+              Preferred Date
+            </label>
+            <select
+              value={formData.scheduledDate.toISOString()}
+              onChange={(e) => setFormData({ ...formData, scheduledDate: new Date(e.target.value) })}
+              className="w-full bg-gray-700 text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              {availableDates.map((date) => (
+                <option key={date.toISOString()} value={date.toISOString()}>
+                  {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                </option>
+              ))}
             </select>
           </div>
 
